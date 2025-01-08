@@ -1,11 +1,14 @@
 import { useState } from "react";
 import "./App.css";
 import { v4 as uuidv4 } from "uuid";
+import { format} from 'date-fns';
 
 function App() {
   const [todos, setTodos] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [filter, setFilter] = useState("all");
+  const [overlay, setOverlay] = useState(false);
+  const [history, setHistory] = useState([]);
 
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
@@ -13,20 +16,26 @@ function App() {
   const handleEnter = (e) =>{
     if(e.key==="Enter"){
       handleAddTask();
-      console.log(e);
     }
   }
   const handleAddTask = () => {
     if (inputValue.length === 0) {
       alert("Empty");
     } else {
+      const newId = uuidv4();
       setTodos([
         ...todos,
-        { description: inputValue, status: "act", id: uuidv4() },
+        { description: inputValue, status: "act", id: newId },
       ]);
+      setHistory([
+        ...history,
+        { task: inputValue, createdTime: format(new Date(), "MM-dd  hh:mm:ss"), completedTime: '-', deletedTime: '-', id: newId},
+      ])
       setInputValue("");
     }
   };
+  
+  
   const handleFilter = (x) => {
     if (x === "all") {
       setFilter("all");
@@ -49,16 +58,76 @@ function App() {
         return elem;
       }
     });
+    const updatedHistory = history.map((elem) => {
+      if(elem.id === id) {
+        return {
+          ...elem,
+          completedTime: format(new Date(), "MM-dd  hh:mm:ss"),
+        };
+      } else {
+        return elem;
+      }
+    });
     setTodos(updatedTodos);
+    setHistory(updatedHistory);
   };
-  const handleDelete = (index) => {
-    setTodos(todos.filter((_, i) => index !== i));
-  };
+  const handleHistory = () => {
+    setOverlay(true);
+  }
   const activeTasks = todos.filter((elem) => elem.status==='act');
   const compleTasks = todos.filter((elem) => elem.status==='com');
-  console.log(activeTasks,compleTasks);
+  const handleDelete = (id,x) => {
+    setTodos(todos.filter((elem) => elem.id !== id));
+    const deletedHistory = history.map((elem) => {
+      if(elem.id === id) {
+        return {
+          ...elem,
+          deletedTime: format(new Date(), "MM-dd  hh:mm:ss"),
+        };
+      } else {
+        return elem;
+      }
+  });
+  setHistory(deletedHistory);
+  // if(x==1){
+  //   handleClear();
+  // }
+  }
   const handleClear = () => {
-    setTodos(todos.filter((elem)=> elem.status !== 'com'))
+   
+    const deletedTodosId = todos.filter((el)=>el.status =="com").map((el)=>el.id);
+    const newHistory = history.map((el)=>{
+      if(deletedTodosId.includes(el.id)){
+        return{
+          ...el, deletedTime: format(new Date(), "MM-dd  hh:mm:ss"),
+        }
+      } else return el
+    })
+
+    setHistory(newHistory)
+
+    const newTodos = todos.filter((el)=>el.status !=="com");
+    setTodos(newTodos)
+  }
+  const handleClose = () => {
+    setOverlay(false);
+  }
+  const handleRestore = (elem) => {
+    const restored = history.map((el) =>{
+    if(elem.deletedTime!=='-'&& el.id===elem.id){
+      setTodos([
+        ...todos,
+        { description: elem.task, status: "act", id: elem.id },
+      ]);
+      return {
+        ...el,
+        deletedTime: '-',
+      }
+    } else {
+        return el;
+    }
+  })
+  setHistory(restored);
   }
 
   return (
@@ -131,7 +200,7 @@ function App() {
                       <p className={elem.status == 'com' ? 'subText decor' : 'subText'}>{elem.description}</p>
                       <button
                         className="deleteButton"
-                        onClick={() => handleDelete(index)}
+                        onClick={() => handleDelete(elem.id,0)}
                       >
                         Delete
                       </button>
@@ -148,7 +217,33 @@ function App() {
           )}
 
         </div>
+        <div className="logHistory" onClick={handleHistory}>Log history</div>
       </div>
+      {overlay === true && (
+        <div className="logWindow">
+          <div className="logTitle"><p>Log history</p></div>
+          <div className="logRow">
+            <p>№</p>
+            <p>Task</p>
+            <p>Created date</p>
+            <p>Completed date</p>
+            <p>Deleted date</p>
+          </div>
+          {history.map((elem, index) => (
+            <div className="logRow" key={index} onClick={() => handleRestore(elem)}>
+              <p>{index+1}.)</p>
+              <p>{elem.task}</p>
+              <p>{elem.createdTime}</p>
+              <p>{elem.completedTime}</p>
+              <p>{elem.deletedTime}</p>
+            </div>
+          ))}
+          <div className="closeC">
+            <input type="button" value="Close" onClick={handleClose}/>
+          </div>
+        </div>
+      )
+      }
     </div>
   );
 }
