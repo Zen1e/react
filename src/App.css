@@ -91,7 +91,7 @@
   transition-duration: .4s;
   background-color: rgba(255, 0, 0, 0.243);
 }
-button{
+.a, button{
   border: none;
   font-size: 15px;
   margin: 5px;
@@ -99,6 +99,11 @@ button{
   border-radius: 5px;
 }
 .blueButton{
+  border: none;
+  font-size: 15px;
+  margin: 5px;
+  padding: 5px 15px;
+  border-radius: 5px;
   transition: .3s;
   color: white;
   background-color: rgb(23, 112, 255);
@@ -124,9 +129,11 @@ button{
   font-size: 15px;
 }
 .logHistory{
+  border: none;
+  background-color: inherit;
   margin-left: 40px;
   margin-bottom: 10px;
-  color: rgb(187, 187, 187);
+  color: rgb(135, 135, 135);
   text-decoration: underline;
   cursor: pointer;
 }
